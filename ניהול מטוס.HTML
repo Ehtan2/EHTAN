@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>מערכת לניהול עובדים</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      direction: rtl;
+      text-align: right;
+      padding: 20px;
+      background-color: #f4f7fa; /* רקע בהיר */
+      color: #333; /* טקסט כהה וברור */
+    }
+
+    h1, h2 {
+      color: #2c3e50; /* צבע כהה לכותרות */
+    }
+
+    nav {
+      background-color: #34495e;
+      padding: 10px;
+      margin-bottom: 20px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      margin: 0 10px;
+      border-radius: 5px;
+    }
+
+    nav a:hover {
+      background-color: #2c3e50;
+    }
+
+    .form-container {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* הצללה עדינה */
+      margin: 20px auto;
+      width: 300px;
+    }
+
+    input[type="text"], input[type="number"], input[type="date"], select {
+      background-color: #f8f9fa;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 10px;
+      width: 100%;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus {
+      border-color: #3498db;
+      outline: none;
+    }
+
+    button {
+      background-color: #3498db;
+      color: white;
+      font-size: 16px;
+      border-radius: 5px;
+      padding: 10px 20px;
+      width: 100%;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    table tbody tr:nth-child(odd) {
+      background-color: #ecf0f1;
+    }
+
+    table tbody tr:nth-child(even) {
+      background-color: #ffffff;
+    }
+
+    table tbody tr:hover {
+      background-color: #dfe6e9;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #errorMessage {
+      color: red;
+      background-color: #f8d7da;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+
+    #successMessage {
+      color: green;
+      background-color: #d4edda;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+
+    button#deleteCompletedTasks {
+      background-color: #e74c3c;
+      color: white;
+      font-size: 16px;
+      border-radius: 5px;
+      padding: 10px 20px;
+      border: none;
+      cursor: pointer;
+    }
+
+    button#deleteCompletedTasks:hover {
+      background-color: #c0392b;
+    }
+
+    #loginScreen {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 30px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #loginScreen input {
+      margin-bottom: 15px;
+    }
+
+    /* אנימציה להוספת עובד */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .form-container {
+      animation: fadeIn 0.5s ease-out;
+    }
+  </style>
+</head>
+<body>
+
+<h1>מערכת לניהול עובדים</h1>
+
+<nav>
+  <a href="#addEmployee">הוסף עובד</a>
+  <a href="#assignTask">הוסף משימה</a>
+  <a href="#employeeList">רשימת עובדים</a>
+</nav>
+
+<div id="loginScreen">
+  <h2>התחברות</h2>
+  <div class="form-container">
+    <input type="text" id="username" placeholder="שם משתמש" required />
+    <input type="password" id="password" placeholder="סיסמה" required />
+    <button onclick="login()">התחבר</button>
+    <p id="loginError" style="color: red; display: none;">שם משתמש או סיסמה שגויים</p>
+  </div>
+</div>
+
+<div id="managementScreen" class="hidden">
+  <h2>ברוך הבא, <span id="loggedInUser"></span>!</h2>
+
+  <div class="form-container">
+    <h2>הוסף עובד חדש</h2>
+    <form id="addEmployeeForm">
+      <input type="text" id="name" placeholder="שם העובד" required />
+      <input type="text" id="position" placeholder="תפקיד" required />
+      <input type="date" id="startDate" required />
+      <input type="number" id="salary" placeholder="שכר" required />
+      <button type="submit">הוסף עובד</button>
+    </form>
+  </div>
+
+  <h2>רשימת עובדים</h2>
+  <table id="employeeTable">
+    <thead>
+      <tr>
+        <th>שם העובד</th>
+        <th>תפקיד</th>
+        <th>תאריך התחלה</th>
+        <th>שכר</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="form-container">
+    <h2>הקצה משימה לעובד</h2>
+    <form id="assignTaskForm">
+      <select id="employeeSelect" required></select>
+      <input type="text" id="taskDescription" placeholder="תיאור המשימה" required />
+      <button type="submit">הקצה משימה</button>
+    </form>
+  </div>
+
+  <h2>משימות לעובדים</h2>
+  <table id="taskTable">
+    <thead>
+      <tr>
+        <th>שם העובד</th>
+        <th>משימה</th>
+        <th>האם הושלמה?</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <button id="deleteCompletedTasks" onclick="deleteCompletedTasks()">מחק משימות הושלמו</button>
+</div>
+
+<!-- Firebase Scripts -->
+<script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCCoFuOz548c4_Y6F9LUH3YmaLK7nhN7vs",
+    authDomain: "ehtan-1b4e3.firebaseapp.com",
+    databaseURL: "https://ehtan-1b4e3-default-rtdb.firebaseio.com",
+    projectId: "ehtan-1b4e3",
+    storageBucket: "ehtan-1b4e3.firebasestorage.app",
+    messagingSenderId: "968342701047",
+    appId: "1:968342701047:web:6e4222d8da258da200e4f2",
+    measurementId: "G-ZL81FB6YRF"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+
+  const users = {
+    "עובדים": { password: "מטוס", role: "עובד" },
+    "איתן": { password: "1813", role: "מנהל" }
+  };
+
+  let employees = [];
+
+  function login() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    const loginError = document.getElementById("loginError");
+
+    if (users[username] && users[username].password === password) {
+      loginError.style.display = "none";
+      if (users[username].role === "מנהל") {
+        document.getElementById("loggedInUser").textContent = username;
+        document.getElementById("managementScreen").classList.remove("hidden");
+        document.getElementById("loginScreen").classList.add("hidden");
+      }
+      loadEmployeesFromFirebase();
+    } else {
+      loginError.style.display = "block";
+    }
+  }
+
+  function saveEmployeesToFirebase() {
+    database.ref("employees").set(employees);
+  }
+
+  function loadEmployeesFromFirebase() {
+    database.ref("employees").on("value", (snapshot) => {
+      employees = snapshot.val() || [];
+      displayEmployees();
+      displayTasks();
+      updateEmployeeSelect();
+    });
+  }
+
+  function displayEmployees() {
+    const tbody = document.querySelector("#employeeTable tbody");
+    tbody.innerHTML = "";
+    employees.forEach((emp) => {
+      const row = tbody.insertRow();
+      row.innerHTML = `
+        <td>${emp.name}</td>
+        <td>${emp.position}</td>
+        <td>${emp.startDate}</td>
+        <td>${emp.salary} ₪</td>
+      `;
+    });
+  }
+
+  function updateEmployeeSelect() {
+    const select = document.getElementById("employeeSelect");
+    select.innerHTML = "";
+    employees.forEach((emp, index) => {
+      const option = document.createElement("option");
+      option.value = index;
+      option.textContent = emp.name;
+      select.appendChild(option);
+    });
+  }
+
+  document.getElementById("addEmployeeForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const name = document.getElementById("name").value;
+    const position = document.getElementById("position").value;
+    const startDate = document.getElementById("startDate").value;
+    const salary = document.getElementById("salary").value;
+
+    employees.push({
+      name,
+      position,
+      startDate,
+      salary,
+      tasks: []
+    });
+
+    saveEmployeesToFirebase();
+    document.getElementById("addEmployeeForm").reset();
+  });
+
+  document.getElementById("assignTaskForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const index = document.getElementById("employeeSelect").value;
+    const description = document.getElementById("taskDescription").value;
+
+    if (employees[index]) {
+      employees[index].tasks.push({ description, completed: false });
+      saveEmployeesToFirebase();
+      document.getElementById("assignTaskForm").reset();
+    }
+  });
+
+  function displayTasks() {
+    const tbody = document.querySelector("#taskTable tbody");
+    tbody.innerHTML = "";
+    employees.forEach((emp) => {
+      if (emp.tasks) {
+        emp.tasks.forEach((task) => {
+          const row = tbody.insertRow();
+          row.innerHTML = `
+            <td>${emp.name}</td>
+            <td>${task.description}</td>
+            <td><input type="checkbox" ${task.completed ? "checked" : ""} onchange="toggleTask('${emp.name}', '${task.description}', this.checked)" /></td>
+          `;
+        });
+      }
+    });
+  }
+
+  function toggleTask(empName, taskDesc, isChecked) {
+    employees.forEach((emp) => {
+      if (emp.name === empName && emp.tasks) {
+        emp.tasks.forEach((task) => {
+          if (task.description === taskDesc) {
+            task.completed = isChecked;
+          }
+        });
+      }
+    });
+    saveEmployeesToFirebase();
+    displayTasks();
+  }
+
+  function deleteCompletedTasks() {
+    employees.forEach((emp) => {
+      emp.tasks = emp.tasks.filter((task) => !task.completed);
+    });
+    saveEmployeesToFirebase();
+    displayTasks();
+  }
+
+  window.onload = function () {
+    loadEmployeesFromFirebase();
+  };
+</script>
+
+</body>
+</html>
